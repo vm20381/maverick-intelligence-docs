@@ -1,0 +1,14 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Maverick Intelligence API",
+  "description": "REST API for the Maverick Intelligence B2B website-visitor identification platform. Provides programmatic, read-only access to identified people and companies, their behavioral events (page views, clicks, scrolls), and account-level analytics. API-key auth via the X-API-Key header, cursor-based pagination, and a 1,000 requests/hour rate limit.",
+  "folders": [],
+  "excludeFolders": ["logo"],
+  "rules": [
+    "Base URL is https://api-v1.maverickintelligence.co and all endpoints are prefixed with /v1/.",
+    "Authenticate every request (except GET /v1/health) with an API key in the X-API-Key header.",
+    "List endpoints use cursor-based pagination: pass the response's pagination.nextCursor back as the cursor query parameter.",
+    "The rate limit is 1,000 requests per hour per account, shared across all API keys; handle 429 responses using the Retry-After header.",
+    "The API is read-only (GET only) and results are always sorted by lastSeen descending."
+  ]
+}
