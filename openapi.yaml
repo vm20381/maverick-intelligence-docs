@@ -1,0 +1,568 @@
+openapi: 3.0.3
+info:
+  title: Maverick Intelligence API
+  description: |
+    Programmatic access to your Maverick Intelligence data — identified website visitors,
+    companies, events, and analytics.
+
+    ## Authentication
+    All endpoints (except `/v1/health`) require an API key passed in the `X-API-Key` header.
+
+    ```bash
+    curl -H "X-API-Key: mk_live_your_key_here" https://api-v1.maverickintelligence.co/v1/people
+    ```
+
+    ## Rate Limiting
+    - **1,000 requests per hour** per customer (shared across all API keys)
+    - Every response includes `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers
+    - When exceeded, you'll receive a `429` response with a `Retry-After` header
+
+    ## Pagination
+    List endpoints use cursor-based pagination. Pass the `nextCursor` from the response
+    as the `cursor` query parameter to fetch the next page.
+
+    ## Sorting
+    Results are always sorted by most recently seen first (`lastSeen` descending).
+    Custom sorting is not yet supported — passing a `sort` or `order` query
+    parameter returns `400 bad_request`. Custom sorting options will be available
+    in a future version.
+  version: "1.0.0"
+  contact:
+    name: Maverick Intelligence Support
+    email: nick@maverickintelligence.co
+    url: https://maverickintelligence.co
+
+servers:
+  - url: https://api-v1.maverickintelligence.co
+    description: Production
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: "API key in format: mk_live_{40 hex chars}"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                - unauthorized
+                - forbidden
+                - not_found
+                - rate_limit_exceeded
+                - bad_request
+                - validation_error
+                - invalid_cursor
+                - internal_error
+            message:
+              type: string
+            status:
+              type: integer
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Requested page size
+        count:
+          type: integer
+          description: Number of items in this page
+        nextCursor:
+          type: string
+          nullable: true
+          description: Pass this as `cursor` to get the next page. Null when no more pages.
+
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+          description: Raw primary email address
+        businessEmail:
+          type: string
+          nullable: true
+          description: Best classified business email (company-domain match preferred)
+        personalEmail:
+          type: string
+          nullable: true
+          description: Best classified personal email (gmail > outlook > yahoo)
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        region:
+          type: string
+          nullable: true
+          enum: [USA, UK, EUR, Other]
+        linkedinUrl:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+          description: Best available phone number (DNC-filtered, matches dashboard display)
+        profileImageUrl:
+          type: string
+          nullable: true
+          description: Person's profile photo URL
+        visitCount:
+          type: integer
+        firstSeen:
+          type: string
+          format: date-time
+        lastSeen:
+          type: string
+          format: date-time
+        isHotLead:
+          type: boolean
+        classifiedSeniority:
+          type: string
+          nullable: true
+        classifiedJobFunction:
+          type: string
+          nullable: true
+        trafficType:
+          type: string
+          nullable: true
+          description: How the visitor arrived (organic, paid, direct, referral)
+        adPlatform:
+          type: string
+          nullable: true
+          description: Ad platform if traffic type is paid (google, facebook, linkedin, etc.)
+        companyData:
+          type: object
+          nullable: true
+          properties:
+            companyId:
+              type: string
+            name:
+              type: string
+            domain:
+              type: string
+            standardizedIndustry:
+              type: string
+            location:
+              type: string
+            employeeCount:
+              type: integer
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        domain:
+          type: string
+          nullable: true
+        standardizedIndustry:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        region:
+          type: string
+          nullable: true
+        linkedinUrl:
+          type: string
+          nullable: true
+          description: Company LinkedIn profile URL
+        employeeCount:
+          type: integer
+          nullable: true
+        visitCount:
+          type: integer
+        firstSeen:
+          type: string
+          format: date-time
+        lastSeen:
+          type: string
+          format: date-time
+        isHotCompany:
+          type: boolean
+        trafficType:
+          type: string
+          nullable: true
+          description: How visitors from this company arrived
+        adPlatform:
+          type: string
+          nullable: true
+          description: Ad platform if traffic type is paid
+
+    Event:
+      type: object
+      properties:
+        eventId:
+          type: string
+        sessionId:
+          type: string
+        eventType:
+          type: string
+          enum:
+            - page_view
+            - click
+            - scroll_depth
+            - video_play
+            - video_pause
+            - video_complete
+            - exit_intent
+            - form_submission
+            - copy
+          description: >
+            The type of behavioral event. Every event includes the base fields
+            (eventId, sessionId, eventType, timestamp, url, pageTitle). Only
+            `click` events add `clickElement`/`clickHref`, and only `scroll_depth`
+            events add `scrollPercentage`; all other types carry the base fields only.
+        timestamp:
+          type: string
+          format: date-time
+        url:
+          type: string
+        pageTitle:
+          type: string
+          nullable: true
+        clickElement:
+          type: string
+          nullable: true
+          description: Only present for click events
+        clickHref:
+          type: string
+          nullable: true
+          description: Only present for click events
+        scrollPercentage:
+          type: integer
+          nullable: true
+          description: Only present for scroll_depth events
+
+    Stats:
+      type: object
+      properties:
+        totalPeople:
+          type: integer
+        totalCompanies:
+          type: integer
+        recentEvents:
+          type: integer
+          description: Pixel events in the last 30 days
+        periodDays:
+          type: integer
+        dailyAverage:
+          type: number
+        generatedAt:
+          type: string
+          format: date-time
+
+  parameters:
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 50
+        minimum: 1
+        maximum: 100
+      description: Number of records per page
+
+    cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+      description: Pagination cursor from the previous response's `nextCursor`
+
+    since:
+      name: since
+      in: query
+      schema:
+        type: string
+        format: date-time
+      description: Only return records with `lastSeen` after this ISO 8601 date
+
+  headers:
+    X-Request-Id:
+      schema:
+        type: string
+        format: uuid
+      description: Unique request identifier for debugging
+    X-RateLimit-Limit:
+      schema:
+        type: integer
+      description: Maximum requests per hour
+    X-RateLimit-Remaining:
+      schema:
+        type: integer
+      description: Remaining requests this hour
+    Retry-After:
+      schema:
+        type: integer
+      description: Seconds until rate limit resets (only on 429 responses)
+
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      description: Returns API status. No authentication required.
+      security: []
+      tags: [System]
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: v1
+
+  /v1/people:
+    get:
+      summary: List people
+      description: |
+        Returns a paginated list of identified website visitors.
+        Results are sorted by most recently seen first.
+      tags: [People]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/since"
+        - name: hot_leads_only
+          in: query
+          schema:
+            type: boolean
+          description: Filter to only ICP-matched hot leads
+      responses:
+        "200":
+          description: List of people
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/X-RateLimit-Limit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/X-RateLimit-Remaining"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Person"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          description: Bad request (invalid parameters)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized (missing or invalid API key)
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/Retry-After"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /v1/people/{id}:
+    get:
+      summary: Get a person
+      description: Returns details for a single identified person.
+      tags: [People]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Person ID
+      responses:
+        "200":
+          description: Person details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Person"
+        "404":
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /v1/people/{id}/events:
+    get:
+      summary: List person events
+      description: |
+        Returns page views, clicks, and scroll events for a specific person.
+        Results are sorted by most recent first.
+      tags: [Events]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Person ID
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/cursor"
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  person:
+                    type: object
+                    description: Summary of the person these events belong to
+                    properties:
+                      id:
+                        type: string
+                      firstName:
+                        type: string
+                        nullable: true
+                      lastName:
+                        type: string
+                        nullable: true
+                      email:
+                        type: string
+                        nullable: true
+                      company:
+                        type: string
+                        nullable: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Event"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "404":
+          description: Person not found
+
+  /v1/companies:
+    get:
+      summary: List companies
+      description: |
+        Returns a paginated list of companies identified from website visitors.
+        Results are sorted by most recently seen first.
+      tags: [Companies]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/since"
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Company"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
+  /v1/companies/{id}:
+    get:
+      summary: Get a company
+      description: Returns details for a single identified company.
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Company ID
+      responses:
+        "200":
+          description: Company details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Company"
+        "404":
+          description: Company not found
+
+  /v1/stats:
+    get:
+      summary: Get statistics
+      description: |
+        Returns aggregate dashboard statistics including total people, companies,
+        recent events, and daily averages.
+
+        Note: This endpoint may have higher latency than list endpoints because
+        it aggregates data across all records.
+      tags: [Statistics]
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Stats"
+
+tags:
+  - name: System
+    description: API health and status
+  - name: People
+    description: Identified website visitors
+  - name: Events
+    description: Behavioral events (page views, clicks, scrolls)
+  - name: Companies
+    description: Companies identified from visitors
+  - name: Statistics
+    description: Aggregate analytics

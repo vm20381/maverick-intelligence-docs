@@ -1,0 +1,49 @@
+---
+title: Authentication
+description: How to authenticate with the Maverick Intelligence API
+---
+
+# Authentication
+
+The API uses API keys for authentication. Include your key in the `X-API-Key` header on every request.
+
+```bash
+curl -H "X-API-Key: mk_live_a1b2c3d4e5f6..." \
+  https://api-v1.maverickintelligence.co/v1/people
+```
+
+## Getting an API key
+
+1. Log in to your [Maverick Intelligence dashboard](https://app.maverickintelligence.co)
+2. Open **Integrations** from the sidebar
+3. Find the **Developer API** card and click **Manage Keys**
+4. Click **Create API Key**
+5. Copy the key immediately — it's only shown once
+
+## Key format
+
+API keys follow the format `mk_live_` followed by 40 random hex characters:
+
+```
+mk_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0
+```
+
+## Security best practices
+
+- **Never expose keys in client-side code** — use your API key from a backend server only
+- **Store keys securely** — use environment variables or a secrets manager
+- **Rotate keys regularly** — you can have up to 5 active keys at a time
+- **Revoke compromised keys immediately** — revocation is instant
+
+## Key limits
+
+- Maximum **5 active keys** per account
+- Keys can be revoked instantly from the dashboard
+- All keys share the same rate limit pool (1,000 requests/hour)
+
+## Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `unauthorized` | Missing API key (header not provided) |
+| 403 | `forbidden` | Invalid or revoked API key |

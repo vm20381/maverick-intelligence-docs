@@ -1,0 +1,150 @@
+---
+title: Python
+description: Python examples for the Maverick Intelligence API
+---
+
+# Python Examples
+
+## Setup
+
+```python
+import requests
+
+API_KEY = "mk_live_your_key_here"
+BASE_URL = "https://api-v1.maverickintelligence.co"
+HEADERS = {"X-API-Key": API_KEY}
+```
+
+## List all people (with pagination)
+
+```python
+def get_all_people():
+    """Fetch all people by paginating through all pages."""
+    people = []
+    cursor = None
+
+    while True:
+        params = {"limit": 100}
+        if cursor:
+            params["cursor"] = cursor
+
+        response = requests.get(
+            f"{BASE_URL}/v1/people",
+            headers=HEADERS,
+            params=params,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        people.extend(data["data"])
+
+        cursor = data["pagination"].get("nextCursor")
+        if not cursor:
+            break
+
+    return people
+
+people = get_all_people()
+print(f"Total people: {len(people)}")
+```
+
+## Get hot leads only
+
+```python
+response = requests.get(
+    f"{BASE_URL}/v1/people",
+    headers=HEADERS,
+    params={"hot_leads_only": "true", "limit": 50},
+)
+hot_leads = response.json()["data"]
+
+for lead in hot_leads:
+    print(f"{lead['firstName']} {lead['lastName']} - {lead['company']}")
+```
+
+## Get people seen since yesterday
+
+```python
+from datetime import datetime, timedelta
+
+yesterday = (datetime.utcnow() - timedelta(days=1)).isoformat() + "Z"
+
+response = requests.get(
+    f"{BASE_URL}/v1/people",
+    headers=HEADERS,
+    params={"since": yesterday},
+)
+recent = response.json()["data"]
+print(f"People seen since yesterday: {len(recent)}")
+```
+
+## Get a person's events
+
+```python
+person_id = "abc123"
+response = requests.get(
+    f"{BASE_URL}/v1/people/{person_id}/events",
+    headers=HEADERS,
+    params={"limit": 100},
+)
+result = response.json()
+
+# Person summary is included at the top level
+person = result["person"]
+print(f"Events for {person['firstName']} {person['lastName']}")
+
+for event in result["data"]:
+    print(f"  {event['timestamp']} - {event['eventType']} - {event['url']}")
+```
+
+## Access classified emails and phone
+
+```python
+people = get_all_people()
+
+for person in people:
+    # Best business email (company-domain match preferred)
+    biz = person.get("businessEmail")
+    # Best personal email (gmail > outlook > yahoo)
+    personal = person.get("personalEmail")
+    # Best phone number (DNC-filtered, matches dashboard display)
+    phone = person.get("phone")
+    # Traffic attribution
+    source = person.get("trafficType")  # organic, paid, direct, referral
+    platform = person.get("adPlatform")  # google, facebook, linkedin (if paid)
+
+    print(f"{person['firstName']} {person['lastName']}")
+    print(f"  Business: {biz}, Personal: {personal}, Phone: {phone}")
+    if source == "paid":
+        print(f"  Came from {platform} ad")
+```
+
+## Get person events with context
+
+```python
+person_id = "abc123"
+response = requests.get(
+    f"{BASE_URL}/v1/people/{person_id}/events",
+    headers=HEADERS,
+    params={"limit": 100},
+)
+result = response.json()
+
+# Person summary included — no second API call needed
+person = result["person"]
+print(f"Events for {person['firstName']} {person['lastName']} ({person['company']})")
+
+for event in result["data"]:
+    print(f"  {event['timestamp']} - {event['eventType']} - {event['url']}")
+```
+
+## Get dashboard stats
+
+```python
+response = requests.get(f"{BASE_URL}/v1/stats", headers=HEADERS)
+stats = response.json()["data"]
+
+print(f"Total people: {stats['totalPeople']}")
+print(f"Total companies: {stats['totalCompanies']}")
+print(f"Events (30d): {stats['recentEvents']}")
+```

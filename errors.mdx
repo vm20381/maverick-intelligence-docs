@@ -1,0 +1,44 @@
+---
+title: Errors
+description: API error codes and how to handle them
+---
+
+# Errors
+
+The API uses standard HTTP status codes and returns errors in a consistent format.
+
+## Error format
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "Person 'abc123' not found",
+    "status": 404
+  }
+}
+```
+
+## Error codes
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `bad_request` | The request was malformed or a reserved parameter was used |
+| 400 | `validation_error` | A query parameter has an invalid type or format |
+| 400 | `invalid_cursor` | The pagination cursor is invalid or expired |
+| 401 | `unauthorized` | Missing API key (X-API-Key header not provided) |
+| 403 | `forbidden` | Invalid or revoked API key |
+| 404 | `not_found` | The requested resource doesn't exist |
+| 429 | `rate_limit_exceeded` | Rate limit exceeded — check `Retry-After` header |
+| 500 | `internal_error` | Something went wrong on our end |
+
+## Debugging
+
+Every response includes an `X-Request-Id` header with a unique identifier. Include this ID when contacting support — it helps us trace the exact request in our logs.
+
+```bash
+curl -v -H "X-API-Key: mk_live_..." https://api-v1.maverickintelligence.co/v1/people
+
+# Response headers:
+# X-Request-Id: 550e8400-e29b-41d4-a716-446655440000
+```

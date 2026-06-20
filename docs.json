@@ -1,0 +1,59 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Maverick Intelligence API",
+  "theme": "mint",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.jpeg",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://app.maverickintelligence.co"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get API Key",
+    "url": "https://app.maverickintelligence.co/api-keys"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": ["introduction", "authentication", "rate-limits", "errors"]
+      },
+      {
+        "group": "Code Examples",
+        "pages": ["examples/python", "examples/javascript", "examples/curl"]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api-reference/health",
+          "api-reference/list-people",
+          "api-reference/get-person",
+          "api-reference/list-person-events",
+          "api-reference/list-companies",
+          "api-reference/get-company",
+          "api-reference/stats"
+        ]
+      }
+    ]
+  },
+  "openapi": "openapi.yaml",
+  "footerSocials": {
+    "website": "https://maverickintelligence.co"
+  }
+}

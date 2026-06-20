@@ -1,0 +1,62 @@
+---
+title: Rate Limits
+description: Understanding API rate limits and how to handle them
+---
+
+# Rate Limits
+
+The API enforces a rate limit of **1,000 requests per hour** per customer. All API keys under the same account share this limit.
+
+## Response headers
+
+Every response includes rate limit information:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-RateLimit-Limit` | Maximum requests per hour | `1000` |
+| `X-RateLimit-Remaining` | Requests remaining this hour | `847` |
+| `Retry-After` | Seconds until limit resets (429 only) | `1823` |
+
+## When you hit the limit
+
+When you exceed the rate limit, the API returns a `429 Too Many Requests` response:
+
+```json
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Rate limit exceeded. Limit: 1000 requests/hour.",
+    "status": 429
+  }
+}
+```
+
+The `Retry-After` header tells you how many seconds to wait before retrying.
+
+## Best practices
+
+- **Implement exponential backoff** — when you receive a 429, wait the `Retry-After` duration before retrying
+- **Cache responses** — if you're making the same request frequently, cache the result
+- **Use pagination efficiently** — fetch larger pages (up to 100 items) to reduce total requests
+- **Sync incrementally** — use the `?since` parameter to only fetch new data since your last sync
+
+## Example: handling rate limits in Python
+
+```python
+import time
+import requests
+
+def api_request(url, api_key, max_retries=3):
+    for attempt in range(max_retries):
+        response = requests.get(url, headers={"X-API-Key": api_key})
+
+        if response.status_code == 429:
+            retry_after = int(response.headers.get("Retry-After", 60))
+            print(f"Rate limited. Waiting {retry_after}s...")
+            time.sleep(retry_after)
+            continue
+
+        return response.json()
+
+    raise Exception("Max retries exceeded")
+```

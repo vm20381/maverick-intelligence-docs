@@ -1,0 +1,121 @@
+---
+title: JavaScript
+description: JavaScript/Node.js examples for the Maverick Intelligence API
+---
+
+# JavaScript Examples
+
+## Setup
+
+```javascript
+const API_KEY = "mk_live_your_key_here";
+const BASE_URL = "https://api-v1.maverickintelligence.co";
+
+async function apiRequest(path, params = {}) {
+  const url = new URL(`${BASE_URL}${path}`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) url.searchParams.set(key, value);
+  });
+
+  const response = await fetch(url, {
+    headers: { "X-API-Key": API_KEY },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+## List all people (with pagination)
+
+```javascript
+async function getAllPeople() {
+  const people = [];
+  let cursor = undefined;
+
+  while (true) {
+    const data = await apiRequest("/v1/people", { limit: 100, cursor });
+    people.push(...data.data);
+
+    cursor = data.pagination.nextCursor;
+    if (!cursor) break;
+  }
+
+  return people;
+}
+
+const people = await getAllPeople();
+console.log(`Total people: ${people.length}`);
+```
+
+## Get hot leads
+
+```javascript
+const { data: hotLeads } = await apiRequest("/v1/people", {
+  hot_leads_only: "true",
+  limit: 50,
+});
+
+hotLeads.forEach((lead) => {
+  console.log(`${lead.firstName} ${lead.lastName} - ${lead.company}`);
+});
+```
+
+## Get recent visitors
+
+```javascript
+const yesterday = new Date(Date.now() - 86400000).toISOString();
+
+const { data: recent } = await apiRequest("/v1/people", {
+  since: yesterday,
+});
+
+console.log(`People seen since yesterday: ${recent.length}`);
+```
+
+## Get a person's events
+
+```javascript
+const personId = "abc123";
+const result = await apiRequest(`/v1/people/${personId}/events`, {
+  limit: 100,
+});
+
+// Person summary included — no second API call needed
+const { person, data: events } = result;
+console.log(`Events for ${person.firstName} ${person.lastName} (${person.company})`);
+
+events.forEach((event) => {
+  console.log(`  ${event.timestamp} - ${event.eventType} - ${event.url}`);
+});
+```
+
+## Access classified emails, phone, and attribution
+
+```javascript
+const { data: people } = await apiRequest("/v1/people", { limit: 50 });
+
+people.forEach((person) => {
+  // Classified emails
+  console.log(`Business: ${person.businessEmail}`);
+  console.log(`Personal: ${person.personalEmail}`);
+  // Best phone (DNC-filtered, matches dashboard)
+  console.log(`Phone: ${person.phone}`);
+  // Traffic attribution
+  console.log(`Source: ${person.trafficType}, Platform: ${person.adPlatform}`);
+});
+```
+
+## Get dashboard stats
+
+```javascript
+const { data: stats } = await apiRequest("/v1/stats");
+
+console.log(`Total people: ${stats.totalPeople}`);
+console.log(`Total companies: ${stats.totalCompanies}`);
+console.log(`Events (30d): ${stats.recentEvents}`);
+```

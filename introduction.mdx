@@ -1,0 +1,90 @@
+---
+title: Introduction
+description: Programmatic access to your Maverick Intelligence data
+---
+
+# Maverick Intelligence API
+
+The Maverick Intelligence API gives you programmatic access to your identified website visitors, companies, behavioral events, and analytics. Use it to build custom integrations, sync data to your warehouse, or power automations.
+
+## What you can do
+
+- **List people** — fetch identified visitors with filtering and pagination
+- **Get person details** — look up a specific visitor by ID
+- **Browse events** — see page views, clicks, and scrolls per person
+- **List companies** — fetch companies identified from your visitors
+- **Get statistics** — pull dashboard-level analytics
+
+## Quick start
+
+1. **Get an API key** from your [Maverick dashboard](https://app.maverickintelligence.co/api-keys)
+2. **Make your first request:**
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  https://api-v1.maverickintelligence.co/v1/people?limit=10
+```
+
+3. **Paginate through results** using the `nextCursor` from the response:
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?limit=10&cursor=eyJQSy..."
+```
+
+## Base URL
+
+```
+https://api-v1.maverickintelligence.co
+```
+
+All endpoints are prefixed with `/v1/`.
+
+## Response format
+
+Every list endpoint returns data in the same format:
+
+```json
+{
+  "data": [
+    {
+      "id": "abc123",
+      "email": "jane@acme.com",
+      "businessEmail": "jane@acme.com",
+      "personalEmail": "jane.doe@gmail.com",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "title": "VP Engineering",
+      "company": "Acme Corp",
+      "phone": "+1 (555) 012-3456",
+      "profileImageUrl": "https://...",
+      "trafficType": "organic",
+      "isHotLead": true,
+      "visitCount": 7
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "count": 50,
+    "nextCursor": "eyJQSy..."
+  }
+}
+```
+
+When `nextCursor` is absent, you've reached the last page.
+
+The **events endpoint** also includes a `person` summary so you know who the events belong to without a second API call:
+
+```json
+{
+  "person": {
+    "id": "abc123",
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "email": "jane@acme.com",
+    "company": "Acme Corp"
+  },
+  "data": [...events...],
+  "pagination": { ... }
+}
+```

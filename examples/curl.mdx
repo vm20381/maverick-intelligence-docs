@@ -1,0 +1,91 @@
+---
+title: cURL
+description: cURL examples for the Maverick Intelligence API
+---
+
+# cURL Examples
+
+Replace `mk_live_your_key_here` with your actual API key in all examples.
+
+## Health check (no auth needed)
+
+```bash
+curl https://api-v1.maverickintelligence.co/v1/health
+```
+
+## List people
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?limit=10"
+```
+
+## Paginate through people
+
+```bash
+# First page
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?limit=50"
+
+# Next page (use nextCursor from previous response)
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?limit=50&cursor=eyJQSy..."
+```
+
+## Get hot leads only
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?hot_leads_only=true"
+```
+
+## Filter by date
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?since=2026-03-01"
+```
+
+## Get a single person
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people/abc123"
+```
+
+## Get person events (includes person summary)
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people/abc123/events?limit=100"
+```
+
+The response includes a `person` object at the top level with the person's name, email, and company — no second API call needed.
+
+## List companies
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/companies?limit=50"
+```
+
+## Get a single company
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/companies/xyz789"
+```
+
+## Get statistics
+
+```bash
+curl -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/stats"
+```
+
+## Check rate limit headers
+
+```bash
+curl -v -H "X-API-Key: mk_live_your_key_here" \
+  "https://api-v1.maverickintelligence.co/v1/people?limit=1" 2>&1 | grep -i "x-ratelimit\|retry-after\|x-request-id"
+```
